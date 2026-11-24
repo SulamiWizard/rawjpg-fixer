@@ -13,8 +13,8 @@ fn main() {
     //     }
     // }
 
-    let jpg_card = Path::new("");
-    let raw_card = Path::new("");
+    let mut jpg_card = Path::new("");
+    let mut raw_card = Path::new("");
 
     let disks = Disks::new_with_refreshed_list().unwrap();
     for disk in &disks {
@@ -25,14 +25,39 @@ fn main() {
             if root_path.exists() {
                 println!("DCIM exists");
                 // print files in DCIM/
+                let (mut nef, mut jpg) = (0, 0);
+
                 for entry in WalkDir::new(&root_path).into_iter().filter_map(|e| e.ok()) {
                     if entry.file_type().is_file() {
+                        if entry
+                            .file_name()
+                            .to_str()
+                            .unwrap_or("")
+                            .to_lowercase()
+                            .ends_with("nef")
+                        {
+                            nef += 1;
+                        }
+                        if entry
+                            .file_name()
+                            .to_str()
+                            .unwrap_or("")
+                            .to_lowercase()
+                            .ends_with("jpg")
+                        {
+                            jpg += 1;
+                        }
                         println!("{}", entry.file_name().to_str().unwrap_or("ERROR"))
                     }
                 }
-            } else {
-                println!("DCIM DOESNT EXIST");
+                if jpg > nef {
+                    jpg_card = disk.mount_point();
+                } else {
+                    raw_card = disk.mount_point();
+                }
             }
         }
     }
+    println!("JPG: {}", jpg_card.to_str().unwrap_or("ERROR"));
+    println!("RAW: {}", raw_card.to_str().unwrap_or("ERROR"));
 }
